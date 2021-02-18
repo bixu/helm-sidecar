@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sidecar
+  namespace: default
+  labels:
+    app: sidecar
+    namespace: default
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: sidecar
+      namespace: default
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: sidecar
+        namespace: default
+        release: {{ .Release.Name }}
+    spec:
+      containers:
+
+        - name: redis
+          image: redis:latest
+          imagePullPolicy: Always
+          ports:
+          - containerPort: 6379
+          env:
+            - name: FOO
+              value: bar
+
+        - name: memcached
+          image: memcached:latest
+          imagePullPolicy: Always
+          ports:
+          - containerPort: 11211
+          env:
+            - name: FOO
+              value: biz
+
+        - name: ubuntu
+          image: ubuntu:latest
+          imagePullPolicy: Always
+          command: [ "/bin/bash", "-c", "--" ]
+          args: [ "while true; do sleep 60; done;" ]
